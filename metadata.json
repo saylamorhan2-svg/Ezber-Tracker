@@ -1,0 +1,6 @@
+{
+  "name": "Ezber Tracker",
+  "description": "A structured and beautifully designed physical and digital sanctuary to track, manage, and master Quranic and academic memorization (Hifz/Ezber). Integrated student progress dashboards and teacher portal.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
