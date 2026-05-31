@@ -15,6 +15,7 @@ export default function LoginScreen({ students, onLogin, onSignup }: LoginScreen
   const [name, setName] = useState('');
   const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
 
   // Focus states for input label transitions
   const [emailFocused, setEmailFocused] = useState(false);
@@ -23,22 +24,41 @@ export default function LoginScreen({ students, onLogin, onSignup }: LoginScreen
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (email.toLowerCase().includes('teacher') || email.toLowerCase().includes('ustadh') || email.toLowerCase().includes('ahmed')) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (cleanEmail.includes('teacher') || cleanEmail.includes('ustadh') || cleanEmail.includes('ahmed')) {
+      setError('');
       onLogin('Teacher');
     } else {
-      // Find matching student by email, fallback to first student profile
-      const matched = students.find(s => s.email.toLowerCase() === email.toLowerCase());
-      onLogin('Student', matched?.id || 's-1');
+      // Find matching student by email, fallback gracefully if not found
+      const matched = students.find(s => s.email.toLowerCase().trim() === cleanEmail);
+      if (matched) {
+        setError('');
+        onLogin('Student', matched.id);
+      } else {
+        setError('This email address is not registered yet. Please click the "Sign Up" tab above to create an account, or select any "Quick Select" profile below for evaluator testing.');
+      }
     }
   };
 
   const handleSignupSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const cleanEmail = email.trim().toLowerCase();
+    const cleanName = name.trim();
+
     if (role === 'teacher') {
+      setError('');
       onLogin('Teacher');
     } else {
+      // Prevent signing up with an email that is already registered
+      const emailExists = students.some(s => s.email.toLowerCase().trim() === cleanEmail);
+      if (emailExists) {
+        setError('An account with this email address already exists. Please switch to the "Login" tab to sign in.');
+        return;
+      }
+
+      setError('');
       // Dynamically add a real student account with the actual name and email entered
-      const newStudentId = onSignup(name, email);
+      const newStudentId = onSignup(cleanName, cleanEmail);
       onLogin('Student', newStudentId);
     }
   };
@@ -103,7 +123,10 @@ export default function LoginScreen({ students, onLogin, onSignup }: LoginScreen
             <div className="bg-slate-100 p-1 rounded-full flex gap-1 relative shadow-inner">
               <button
                 type="button"
-                onClick={() => setActiveTab('login')}
+                onClick={() => {
+                  setActiveTab('login');
+                  setError('');
+                }}
                 className={`px-8 py-2 rounded-full font-bold text-sm transition-all duration-300 z-10 cursor-pointer ${
                   activeTab === 'login' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-400 hover:text-slate-600'
                 }`}
@@ -112,7 +135,10 @@ export default function LoginScreen({ students, onLogin, onSignup }: LoginScreen
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('signup')}
+                onClick={() => {
+                  setActiveTab('signup');
+                  setError('');
+                }}
                 className={`px-8 py-2 rounded-full font-bold text-sm transition-all duration-300 z-10 cursor-pointer ${
                   activeTab === 'signup' ? 'bg-white text-slate-800 shadow-xs' : 'text-slate-400 hover:text-slate-600'
                 }`}
@@ -124,6 +150,12 @@ export default function LoginScreen({ students, onLogin, onSignup }: LoginScreen
 
           {/* Forms Area */}
           <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-xs">
+            {error && (
+              <div className="p-4 bg-rose-50 border border-rose-100 text-rose-800 rounded-2xl text-xs font-semibold leading-relaxed mb-6 flex gap-2.5 items-start animate-in fade-in duration-200">
+                <span className="text-sm select-none" role="img" aria-label="warning">⚠️</span>
+                <span>{error}</span>
+              </div>
+            )}
             {activeTab === 'login' ? (
               <div className="space-y-6">
                 <header>
@@ -301,6 +333,7 @@ export default function LoginScreen({ students, onLogin, onSignup }: LoginScreen
               <button
                 type="button"
                 onClick={() => {
+                  setError('');
                   setEmail('zaid@ezbertracker.com');
                   onLogin('Student', 's-1');
                 }}
@@ -311,6 +344,7 @@ export default function LoginScreen({ students, onLogin, onSignup }: LoginScreen
               <button
                 type="button"
                 onClick={() => {
+                  setError('');
                   setEmail('ibrahim@ezbertracker.com');
                   onLogin('Student', 's-2');
                 }}
@@ -321,6 +355,7 @@ export default function LoginScreen({ students, onLogin, onSignup }: LoginScreen
               <button
                 type="button"
                 onClick={() => {
+                  setError('');
                   setEmail('ustadh@ezberacademy.com');
                   onLogin('Teacher');
                 }}

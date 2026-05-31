@@ -47,9 +47,9 @@ import {
 export default function App() {
   // Session States
   const [isLoggedIn, setIsLoggedIn] = useState(() => {
-    if (typeof window === 'undefined') return true;
+    if (typeof window === 'undefined') return false;
     const stored = localStorage.getItem('ezber_is_logged_in');
-    return stored !== null ? stored === 'true' : true;
+    return stored === 'true';
   });
   const [currentUserRole, setCurrentUserRole] = useState<'Student' | 'Teacher'>(() => {
     if (typeof window === 'undefined') return 'Student';
@@ -62,11 +62,23 @@ export default function App() {
     return stored || 's-1';
   });
 
-  // Database States
-  const [students, setStudents] = useState<Student[]>([]);
-  const [classroom, setClassroom] = useState<Classroom>(DEFAULT_CLASSROOM);
-  const [targets, setTargets] = useState<Target[]>([]);
-  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>([]);
+  // Database States (loaded synchronously on first render)
+  const [students, setStudents] = useState<Student[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return loadStoredData().students;
+  });
+  const [classroom, setClassroom] = useState<Classroom>(() => {
+    if (typeof window === 'undefined') return DEFAULT_CLASSROOM;
+    return loadStoredData().classroom;
+  });
+  const [targets, setTargets] = useState<Target[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return loadStoredData().targets;
+  });
+  const [activityLogs, setActivityLogs] = useState<ActivityLog[]>(() => {
+    if (typeof window === 'undefined') return [];
+    return loadStoredData().activityLogs;
+  });
 
   // Navigation tab states
   const [activeHeaderNav, setActiveHeaderNav] = useState<string>('Dashboard');
@@ -102,20 +114,9 @@ export default function App() {
     }
   };
 
-  // Initial Load from localStorage
+  // Initial Load from localStorage (ensures keys are initialized in storage on mount)
   useEffect(() => {
-    const data = loadStoredData();
-    setStudents(data.students);
-    setClassroom(data.classroom);
-    setTargets(data.targets);
-    setActivityLogs(data.activityLogs);
-
-    // If first-time visitor, default to logged-in student profile s-1
-    if (typeof window !== 'undefined' && localStorage.getItem('ezber_is_logged_in') === null) {
-      localStorage.setItem('ezber_is_logged_in', 'true');
-      localStorage.setItem('ezber_role', 'Student');
-      localStorage.setItem('ezber_profile_id', 's-1');
-    }
+    loadStoredData();
   }, []);
 
   // Save changes to localStorage whenever states update
